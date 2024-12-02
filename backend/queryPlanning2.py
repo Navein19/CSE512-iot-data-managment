@@ -67,17 +67,31 @@ class StreamOptimizer:
     def generate_mermaid_graph(self, parsed_query, scan_types):
         """
         Generates a Mermaid graph code for the query tree with IoT-specific optimizations.
+        Each table is scanned in multiple segments, represented as separate blocks.
         """
         graph_code = "graph TD\n"
         root = "Query"
 
-        # Add FROM clause with scans
+        # Handle FROM clause with scans
         branch_nodes = []
         for i, table in enumerate(parsed_query["FROM"]):
             scan_type = scan_types[i]
-            table_node = f"{scan_type}_{self.sanitize_mermaid_label(table)}"
-            graph_code += f"{root} --> {table_node}\n"
-            branch_nodes.append(table_node)
+            table_node_prefix = f"{scan_type}_{self.sanitize_mermaid_label(table)}"
+
+            # Simulate multiple scans for parts of the table
+            num_segments = 3  # Number of segments to scan
+            segment_nodes = []
+            for segment in range(1, num_segments + 1):
+                segment_node = f"{table_node_prefix}Part{segment}"
+                graph_code += f"{root} --> {segment_node}\n"
+                segment_nodes.append(segment_node)
+
+            # Merge scanned parts into a single node for the table
+            merge_node = f"Merge_{self.sanitize_mermaid_label(table)}"
+            for segment_node in segment_nodes:
+                graph_code += f"{segment_node} --> {merge_node}\n"
+
+            branch_nodes.append(merge_node)
 
         # Handle JOINs
         if len(branch_nodes) > 1:

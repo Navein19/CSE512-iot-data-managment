@@ -117,7 +117,7 @@ async def receive_any_data(request: Request):
                     {
                 "id":idx+2,
                 "graph":plan.graph_code,
-                "description": "Execution Plan " + str(idx+2)
+                "description": "Theorical Plan " + str(idx+2)
             }
             )
 
