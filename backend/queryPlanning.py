@@ -80,12 +80,14 @@ class CassandraQueryVisualizer:
         mermaid_lines = ["graph TD"]
 
         def add_node(node: QueryNode, parent_id: Optional[str] = None):
-            node_style = self._get_node_style(node.operation)
-            node_label = f"{node.operation}<br/>{self._format_metrics(node.metrics)}"
-            mermaid_lines.append(f"{node.node_id}[{node_label}]{node_style}")
+            # Replace <br/> with \n for Mermaid compatibility
+            node_label = f"{node.operation}\n{self._format_metrics(node.metrics)}"
+            node_id = node.node_id.replace("-", "_")  # Replace dashes for Mermaid compatibility
+            mermaid_lines.append(f'{node_id}["{node_label}"]')
 
             if parent_id:
-                mermaid_lines.append(f"{parent_id} --> {node.node_id}")
+                parent_id = parent_id.replace("-", "_")
+                mermaid_lines.append(f"{parent_id} --> {node_id}")
 
             if node.children:
                 for child in node.children:
@@ -93,6 +95,7 @@ class CassandraQueryVisualizer:
 
         add_node(self.root_node)
         return "\n".join(mermaid_lines)
+
 
     def _get_node_style(self, operation: str) -> str:
         """Get Mermaid node style based on operation type"""
@@ -114,11 +117,8 @@ class CassandraQueryVisualizer:
 
         formatted = []
         for key, value in metrics.items():
-            if isinstance(value, (int, float)):
-                formatted.append(f"{key}: {value:,.0f}")
-            else:
-                formatted.append(f"{key}: {value}")
-        return "<br/>".join(formatted)
+            formatted.append(f"{key}: {value}")
+        return "\n".join(formatted)
 
 
 # class EnhancedCassandraQueryOptimizer:

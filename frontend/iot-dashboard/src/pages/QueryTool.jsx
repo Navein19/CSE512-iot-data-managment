@@ -66,17 +66,36 @@ const QueryTool = () => {
         renderMermaidDiagram();
     }, [selectedPlanGraph, graphId]);
 
-    const executeQuery = () => {
-        if(!query.startsWith("select")){
-            window.alert("Operation Restricted!!")
+    const executeQuery = async () => {
+        if (!(query.startsWith("select") ||query.startsWith("SELECT")) ) {
+            window.alert("Operation Restricted!!");
             return;
         }
         setLoading(true);
-        setTimeout(() => {
-            setApiResponse(staticApiResponse);
-            setSelectedPlanGraph(null);
-            setLoading(false);
-        }, 1000);
+    
+        try {
+            const response = await fetch("http://127.0.0.1:8000/get_query_plan", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ query }), // Send the query as the request body
+            });
+    
+            if (!response.ok) {
+                throw new Error(`Error: ${response.status}`);
+            }
+    
+            const result = await response.json();
+            setApiResponse(result); // Set the API response
+            setSelectedPlanGraph(null); // Reset the selected plan graph
+            console.log(result)
+        } catch (error) {
+            console.error("Error executing query:", error);
+            window.alert("Failed to execute the query. Please try again.");
+        } finally {
+            setLoading(false); // Stop the loading spinner
+        }
     };
 
     const renderGraph = (graph) => {
@@ -156,7 +175,7 @@ const QueryTool = () => {
             )}
 
             {/* Query Results */}
-            {apiResponse && apiResponse.searchResults.length > 0 && (
+            {apiResponse && apiResponse.searchResult.length > 0 && (
                 <Grid container spacing={3} style={{ marginTop: "20px" }}>
                     <Grid item xs={12}>
                         <Card>
@@ -166,13 +185,13 @@ const QueryTool = () => {
                                     <Table>
                                         <TableHead>
                                             <TableRow>
-                                                {Object.keys(apiResponse.searchResults[0]).map((key) => (
+                                                {Object.keys(apiResponse.searchResult[0]).map((key) => (
                                                     <TableCell key={key}>{key.replace("_", " ").toUpperCase()}</TableCell>
                                                 ))}
                                             </TableRow>
                                         </TableHead>
                                         <TableBody>
-                                            {apiResponse.searchResults.map((row, index) => (
+                                            {apiResponse.searchResult.map((row, index) => (
                                                 <TableRow key={index}>
                                                     {Object.values(row).map((value, cellIndex) => (
                                                         <TableCell key={cellIndex}>{value}</TableCell>
