@@ -54,7 +54,7 @@ async def get_severity_counts():
 @app.get("/get_metrics")
 async def get_metrics():
     try:
-        limited_df = df.limit(500)
+        limited_df = df
         
         pandas_df = limited_df.toPandas()
 
